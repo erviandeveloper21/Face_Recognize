@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+use Illuminate\Foundation\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+
+define('LARAVEL_START', microtime(true));
+
+// Auto-load project php.ini if database drivers (pdo_mysql / pdo_sqlite) are missing
+if ((!extension_loaded('pdo_mysql') || !extension_loaded('pdo_sqlite')) && file_exists(__DIR__ . '/php.ini') && empty(getenv('ARTISAN_RELOADED'))) {
+    putenv('ARTISAN_RELOADED=1');
+    putenv('PHPRC=' . __DIR__);
+    $args = array_slice($argv, 1);
+    $escapedArgs = array_map(function ($arg) {
+        return '"' . str_replace('"', '\"', $arg) . '"';
+    }, $args);
+    $cmd = '"' . PHP_BINARY . '" -c "' . __DIR__ . '/php.ini" "' . __FILE__ . '"' . ($escapedArgs ? ' ' . implode(' ', $escapedArgs) : '');
+    passthru($cmd, $exitCode);
+    exit($exitCode);
+}
+
+// Register the Composer autoloader...
+require __DIR__.'/vendor/autoload.php';
+
+// Bootstrap Laravel and handle the command...
+/** @var Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$status = $app->handleCommand(new ArgvInput);
+
+exit($status);
